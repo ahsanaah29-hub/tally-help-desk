@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Search, BookOpen, FileText, Video, Image, ChevronDown, ChevronUp, HelpCircle, ExternalLink } from 'lucide-react'
 
 // TDL Help Desk - Beautiful Blue Theme Interface
@@ -105,21 +105,9 @@ export default function TallyHelpDesk() {
   const [query, setQuery] = useState('')
   const [openId, setOpenId] = useState(null)
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [predictions, setPredictions] = useState([])
-
-  useEffect(() => {
-    if (query.trim() === "") {
-      setPredictions([]);
-    } else {
-      const matches = DATA.filter(d =>
-        d.question.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 5);
-      setPredictions(matches);
-    }
-  }, [query]);
 
   const categories = ['All', ...Array.from(new Set(DATA.map(item => item.category)))]
-
+  
   const filtered = DATA.filter(d => {
     const matchesSearch = d.question.toLowerCase().includes(query.toLowerCase()) || 
                          d.answer.toLowerCase().includes(query.toLowerCase())
@@ -182,24 +170,6 @@ export default function TallyHelpDesk() {
               placeholder="Search TDL topics, syntax, functions, or concepts..." 
               className="w-full pl-12 pr-4 py-4 text-lg rounded-xl border-2 border-blue-100 focus:border-blue-400 focus:outline-none transition-colors"
             />
-
-            {/* Prediction Dropdown */}
-            {predictions.length > 0 && (
-              <div className="absolute left-0 right-0 bg-white border border-blue-100 rounded-xl shadow-lg mt-1 z-10">
-                {predictions.map(item => (
-                  <div
-                    key={item.id}
-                    onClick={() => {
-                      setQuery(item.question);
-                      setPredictions([]);
-                    }}
-                    className="px-4 py-2 cursor-pointer hover:bg-blue-50 text-gray-700"
-                  >
-                    {item.question}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
           
           {/* Category Filter */}
@@ -219,4 +189,175 @@ export default function TallyHelpDesk() {
             ))}
           </div>
         </div>
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <p className="text-gray-600">
+            Showing <span className="font-semibold text-blue-600">{filtered.length}</span> of {DATA.length} topics
+            {selectedCategory !== 'All' && (
+              <span className="ml-2 text-sm text-gray-500">in {selectedCategory}</span>
+            )}
+          </p>
+        </div>
+
+        {/* FAQ Items */}
+        <div className="space-y-6">
+          {filtered.map(item => (
+            <article key={item.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-blue-50 overflow-hidden">
+              <button 
+                onClick={() => setOpenId(openId === item.id ? null : item.id)}
+                className="w-full text-left p-6 hover:bg-blue-25 transition-colors"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(item.category)}`}>
+                        {item.category}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(item.difficulty)}`}>
+                        {item.difficulty}
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors">
+                      {item.question}
+                    </h2>
+                    {openId !== item.id && (
+                      <p className="text-gray-600 text-sm line-clamp-2">
+                        {item.answer.substring(0, 120)}...
+                      </p>
+                    )}
+                  </div>
+                  <div className="ml-4 p-2 rounded-full bg-blue-50 text-blue-600">
+                    {openId === item.id ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </div>
+                </div>
+              </button>
+
+              {openId === item.id && (
+                <div className="px-6 pb-6 border-t border-blue-50 bg-gradient-to-r from-blue-25 to-cyan-25">
+                  <div className="pt-4">
+                    <p className="text-gray-700 leading-relaxed mb-6 text-base">
+                      {item.answer}
+                    </p>
+
+                    {/* Resource Links */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                      {item.guideUrl && (
+                        <a 
+                          href={item.guideUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center justify-center px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl group"
+                        >
+                          <BookOpen className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">Official Guide</span>
+                          <ExternalLink className="w-3 h-3 ml-2 opacity-70" />
+                        </a>
+                      )}
+                      
+                      {item.pdfUrl && (
+                        <a 
+                          href={item.pdfUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center justify-center px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl group"
+                        >
+                          <FileText className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">PDF Manual</span>
+                          <ExternalLink className="w-3 h-3 ml-2 opacity-70" />
+                        </a>
+                      )}
+                      
+                      {item.videoUrl && (
+                        <a 
+                          href={item.videoUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center justify-center px-4 py-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all shadow-lg hover:shadow-xl group"
+                        >
+                          <Video className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">Watch Video</span>
+                          <ExternalLink className="w-3 h-3 ml-2 opacity-70" />
+                        </a>
+                      )}
+                      
+                      {item.imgUrl && (
+                        <a 
+                          href={item.imgUrl} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="flex items-center justify-center px-4 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl group"
+                        >
+                          <Image className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">View Examples</span>
+                          <ExternalLink className="w-3 h-3 ml-2 opacity-70" />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Visual Preview */}
+                    {item.imgUrl && (
+                      <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-inner">
+                        <img 
+                          src={item.imgUrl} 
+                          alt={`${item.question} diagram`}
+                          className="w-full max-h-64 object-contain rounded-lg" 
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.nextElementSibling.style.display = 'block'
+                          }}
+                        />
+                        <div className="hidden text-center text-gray-500 py-8">
+                          <Image className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Preview not available. Click "View Examples" to see the content.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </article>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="text-center py-16">
+              <div className="bg-white rounded-2xl shadow-lg p-12 border border-blue-100">
+                <Search className="w-16 h-16 text-blue-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">No matching topics found</h3>
+                <p className="text-gray-500 mb-4">Try different keywords like 'voucher', 'invoice', 'collection', or 'function'</p>
+                <button 
+                  onClick={() => { setQuery(''); setSelectedCategory('All') }}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Clear Search
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <footer className="mt-16 bg-white rounded-2xl shadow-lg p-8 border border-blue-100 text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-2 rounded-full mr-3">
+              <BookOpen className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800">Need More Help?</h3>
+          </div>
+          <p className="text-gray-600 mb-4">
+            This help desk covers the most popular TDL questions with official documentation, video tutorials, and community resources.
+          </p>
+          <p className="text-sm text-blue-600 bg-blue-50 px-4 py-2 rounded-full inline-block">
+            Sources: Official Tally Developer Docs • TDL Reference Manual • Community Tutorials • YouTube Guides
+          </p>
+        </footer>
+      </div>
+    </div>
+  )
+}
+
+import React, { useState } from 'react'
+import { Search, BookOpen, FileText, Video, Image, ChevronDown, ChevronUp, HelpCircle, ExternalLink } from 'lucide-react'
+
+// ... rest of the component code goes here
 
