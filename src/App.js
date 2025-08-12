@@ -356,8 +356,8 @@ export default function TallyHelpDesk() {
   )
 }
 
-import React, { useState } from 'react'
-import { Search, BookOpen, FileText, Video, Image, ChevronDown, ChevronUp, HelpCircle, ExternalLink } from 'lucide-react'
+
 
 // ... rest of the component code goes here
+
 
